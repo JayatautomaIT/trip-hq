@@ -9,8 +9,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   return handle(async () => {
     const s = await requireSession();
-    const rows = await sql`SELECT id, title, body, color, updated_by, updated_at
-                           FROM notes WHERE trip_id = ${s.tripId} ORDER BY created_at`;
+    // Pinned notes float to the top — they double as the trip's reference info.
+    const rows = await sql`SELECT id, title, body, color, pinned, updated_by, updated_at
+                           FROM notes WHERE trip_id = ${s.tripId}
+                           ORDER BY pinned DESC, created_at`;
     return ok({ notes: rows });
   });
 }
@@ -36,6 +38,7 @@ export async function PATCH(req: Request) {
                 title = COALESCE(${b.title ?? null}, title),
                 body = COALESCE(${b.body ?? null}, body),
                 color = COALESCE(${b.color ?? null}, color),
+                pinned = COALESCE(${b.pinned ?? null}, pinned),
                 updated_by = ${s.name},
                 updated_at = now()
               WHERE id = ${b.id} AND trip_id = ${s.tripId}`;

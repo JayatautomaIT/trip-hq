@@ -1,26 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Protected } from '@/components/Protected';
 import { useSession } from '@/components/SessionProvider';
 import { jget, jpost, jpatch, jdel } from '@/lib/client';
 
-type Guest = { code: string; name: string; rsvp: string; contact: string | null; pay_handle: string | null; diet: string | null };
+type Guest = {
+  code: string; name: string; rsvp: string; contact: string | null;
+  pay_handle: string | null; diet: string | null;
+};
+
 const RSVPS = [
-  ['yes', "I'm in", 'good'],
-  ['maybe', 'Maybe', 'warn'],
-  ['no', "Can't make it", 'bad'],
+  ['yes', "I'm in"],
+  ['maybe', 'Maybe'],
+  ['no', "Can't make it"],
 ] as const;
 
-export default function GuysPage() {
-  return (
-    <Protected>
-      <Guys />
-    </Protected>
-  );
-}
-
-function Guys() {
+export function GuysView() {
   const { session, isAdmin } = useSession();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [nf, setNf] = useState({ name: '', code: '', contact: '' });
@@ -28,10 +23,6 @@ function Guys() {
   const load = () => jget('/api/guests').then((d) => setGuests(d.guests)).catch(() => {});
   useEffect(() => { load(); }, []);
 
-  async function setRsvp(code: string, rsvp: string) {
-    await jpatch('/api/guests', { code, rsvp });
-    load();
-  }
   async function addGuy() {
     const code = nf.code.trim() || nf.name.toLowerCase().replace(/\s+/g, '');
     if (!nf.name.trim() || !code) return;
@@ -48,9 +39,8 @@ function Guys() {
   };
 
   return (
-    <div className="container">
-      <h1>The Guys 🧑‍🤝‍🧑</h1>
-      <p className="page-sub">Set your own RSVP. {isAdmin ? 'As organizer you can edit anyone and add/remove guys.' : ''}</p>
+    <div>
+      <p className="page-sub">Set your own RSVP and details. {isAdmin ? 'As organizer you can edit anyone.' : ''}</p>
 
       <div className="card">
         <div className="row">
@@ -62,7 +52,6 @@ function Guys() {
       </div>
 
       <MyDetails guests={guests} onSaved={load} />
-
 
       <div className="stack" style={{ marginTop: 14 }}>
         {guests.map((g) => {
@@ -91,11 +80,11 @@ function Guys() {
               </div>
               {canEdit && (
                 <div className="row" style={{ marginTop: 10 }}>
-                  {RSVPS.map(([val, label, cls]) => (
+                  {RSVPS.map(([val, label]) => (
                     <button
                       key={val}
-                      className={`btn sm ${g.rsvp === val ? cls === 'good' ? 'primary' : '' : 'ghost'}`}
-                      onClick={() => setRsvp(g.code, val)}
+                      className={`btn sm ${g.rsvp === val ? 'primary' : 'ghost'}`}
+                      onClick={() => jpatch('/api/guests', { code: g.code, rsvp: val }).then(load)}
                     >
                       {label}
                     </button>

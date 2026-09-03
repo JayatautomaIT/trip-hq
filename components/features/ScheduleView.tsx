@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Protected } from '@/components/Protected';
 import { useSession } from '@/components/SessionProvider';
 import { jget, jpost, jpatch, jdel } from '@/lib/client';
 
@@ -18,19 +17,12 @@ type Ev = {
 const norm = (v: any) => (v ? String(v).slice(0, 10) : '');
 function dayLabel(d: string | null) {
   if (!d) return 'Unscheduled';
-  const date = new Date(norm(d) + 'T00:00:00');
-  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  return new Date(norm(d) + 'T00:00:00').toLocaleDateString(undefined, {
+    weekday: 'long', month: 'short', day: 'numeric',
+  });
 }
 
-export default function SchedulePage() {
-  return (
-    <Protected>
-      <Schedule />
-    </Protected>
-  );
-}
-
-function Schedule() {
+export function ScheduleView() {
   const { isAdmin } = useSession();
   const [events, setEvents] = useState<Ev[]>([]);
   const [editing, setEditing] = useState<number | 'new' | null>(null);
@@ -39,16 +31,14 @@ function Schedule() {
   useEffect(() => { load(); }, []);
 
   const groups: Record<string, Ev[]> = {};
-  for (const e of events) {
-    const k = norm(e.day) || 'zzz';
-    (groups[k] ||= []).push(e);
-  }
+  for (const e of events) (groups[norm(e.day) || 'zzz'] ||= []).push(e);
   const keys = Object.keys(groups).sort();
 
   return (
-    <div className="container">
-      <h1>Schedule</h1>
-      <p className="page-sub">The plan, day by day. {isAdmin ? 'You can edit and pin the locked-in ones.' : 'Only the organizer edits this.'}</p>
+    <div>
+      <p className="page-sub">
+        {isAdmin ? 'Add events and pin the ones that are locked in.' : 'The plan, day by day. Only the organizer edits this.'}
+      </p>
 
       {isAdmin && editing !== 'new' && (
         <button className="btn primary" onClick={() => setEditing('new')}>+ Add event</button>

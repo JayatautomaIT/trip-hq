@@ -149,15 +149,8 @@ ALTER TABLE trips  ADD COLUMN IF NOT EXISTS budget_per_person_cents INT;
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS pay_handle TEXT;  -- Venmo / e-transfer / PayPal
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS diet TEXT;        -- allergies / dietary notes
 ALTER TABLE packing_items ADD COLUMN IF NOT EXISTS public BOOLEAN NOT NULL DEFAULT FALSE;
-
--- Trip info / logistics: arbitrary titled sections (address, wifi, rules, rides, rooming, emergency…)
-CREATE TABLE IF NOT EXISTS info_sections (
-  id      SERIAL PRIMARY KEY,
-  trip_id INT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  label   TEXT NOT NULL,
-  body    TEXT,
-  sort    INT NOT NULL DEFAULT 0
-);
+-- Pinned notes double as the trip's reference info (address, Wi-Fi, house rules…)
+ALTER TABLE notes ADD COLUMN IF NOT EXISTS pinned BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Who's responsible for what
 CREATE TABLE IF NOT EXISTS tasks (
@@ -171,20 +164,6 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Availability poll: candidate dates + each guy's yes/maybe/no
-CREATE TABLE IF NOT EXISTS poll_dates (
-  id      SERIAL PRIMARY KEY,
-  trip_id INT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  label   TEXT NOT NULL,
-  sort    INT NOT NULL DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS poll_votes (
-  poll_date_id INT NOT NULL REFERENCES poll_dates(id) ON DELETE CASCADE,
-  guest_code   TEXT NOT NULL,
-  choice       TEXT NOT NULL,     -- yes | maybe | no
-  PRIMARY KEY (poll_date_id, guest_code)
-);
-
 -- Recorded payments between guys (settling up)
 CREATE TABLE IF NOT EXISTS settlements (
   id           SERIAL PRIMARY KEY,
@@ -196,13 +175,14 @@ CREATE TABLE IF NOT EXISTS settlements (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Group chat feed (any message can be turned into a to-do / buy / bring item)
+-- Group chat feed (any message can be turned into a note / idea / to-do / buy / bring item)
 CREATE TABLE IF NOT EXISTS messages (
   id         SERIAL PRIMARY KEY,
   trip_id    INT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
   guest_code TEXT NOT NULL,
   name       TEXT NOT NULL,
   body       TEXT NOT NULL,
+  file_id    INT,                 -- optional attachment -> files.id
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -221,6 +201,9 @@ CREATE TABLE IF NOT EXISTS files (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- (for databases created before chat attachments existed)
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_id INT;
+
 
 -- =====================================================================
 --  STARTER EVENT  —  EDIT the names, then add more guys as needed.
@@ -228,38 +211,34 @@ CREATE TABLE IF NOT EXISTS files (
 --  Each guy's login = first + last name, lowercase, no spaces.
 -- =====================================================================
 INSERT INTO trips (code, name, trip_date) VALUES
-  ('jamesspacebachelor', 'The Big Send-Off', '2026-09-11')
+  ('demo2026', 'The Big Send-Off', '2026-06-19')
 ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO guests (trip_id, code, name, sort)
 SELECT t.id, v.code, v.name, v.sort
 FROM trips t
 JOIN (VALUES
-  ('ajayprado',     'Ajay Prado',     1),   -- <-- change to YOUR real name
-  ('brandoncotton',  'Brandon Cotton',  2),
-  ('jamespucula', 'James Pucula', 3),
-  ('jamierail',    'Jamie Rail',    4),
-  ('kenpucula',    'Ken Pucula',    5),
-  ('kyleallen',    'Kyle Allen',    6),
-  ('kylelagrandeur',    'Kyle Lagrandeur',    7),
-  ('nickaikenhead',    'Nick Aikenhead',    8)
+  ('jaydoe',     'Jay Doe',     1),   -- <-- change to YOUR real name
+  ('mikesmith',  'Mike Smith',  2),
+  ('chrisjones', 'Chris Jones', 3),
+  ('alexlee',    'Alex Lee',    4)
 ) AS v(code, name, sort) ON TRUE
-WHERE t.code = 'jamesspacebachelor'
+WHERE t.code = 'demo2026'
 ON CONFLICT (trip_id, code) DO NOTHING;
 
--- Some starter info sections for the demo event (only if it has none yet).
-INSERT INTO info_sections (trip_id, label, body, sort)
-SELECT t.id, v.label, v.body, v.sort
+-- Starter PINNED notes = the trip's reference info (only if the event has no notes yet).
+INSERT INTO notes (trip_id, title, body, color, pinned, updated_by)
+SELECT t.id, v.title, v.body, v.color, TRUE, 'setup'
 FROM trips t JOIN (VALUES
-  ('Where we''re staying', 'Add the address + check-in / check-out times.', 1),
-  ('Wi-Fi',               'Network + password once we have it.',            2),
-  ('House rules',         'Anything the place asks of us.',                 3),
-  ('Getting around',      'Who''s driving / car groups / rideshare plan.',  4),
-  ('Rooming',             'Who''s bunking where.',                          5),
-  ('Emergency contacts',  'A couple of numbers, just in case.',             6)
-) AS v(label, body, sort) ON TRUE
+  ('Where we''re staying', 'Add the address + check-in / check-out times.', 'blue'),
+  ('Wi-Fi',               'Network + password once we have it.',            'blue'),
+  ('House rules',         'Anything the place asks of us.',                 'yellow'),
+  ('Getting around',      'Who''s driving / car groups / rideshare plan.',  'green'),
+  ('Rooming',             'Who''s bunking where.',                          'green'),
+  ('Emergency contacts',  'A couple of numbers, just in case.',             'pink')
+) AS v(title, body, color) ON TRUE
 WHERE t.code = 'demo2026'
-  AND NOT EXISTS (SELECT 1 FROM info_sections s WHERE s.trip_id = t.id);
+  AND NOT EXISTS (SELECT 1 FROM notes n WHERE n.trip_id = t.id);
 
 
 -- =====================================================================

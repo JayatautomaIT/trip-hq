@@ -5,12 +5,19 @@ import { handle, ok, bad } from '@/lib/api';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Group chat. Everyone posts; messages can be turned into to-do / buy / bring items on the client.
+// Group chat. Messages can carry a file attachment and can be turned into
+// a note / idea / to-do / shopping / packing item on the client.
 export async function GET() {
   return handle(async () => {
     const s = await requireSession();
-    const rows = await sql`SELECT id, guest_code, name, body, created_at FROM messages
-                           WHERE trip_id = ${s.tripId} ORDER BY created_at DESC LIMIT 200`;
+    const rows = await sql`
+      SELECT m.id, m.guest_code, m.name, m.body, m.created_at,
+             f.url AS file_url, f.name AS file_name, f.content_type AS file_type
+      FROM messages m
+      LEFT JOIN files f ON f.id = m.file_id
+      WHERE m.trip_id = ${s.tripId}
+      ORDER BY m.created_at DESC
+      LIMIT 200`;
     return ok({ messages: (rows as any[]).reverse() });
   });
 }
@@ -20,9 +27,10 @@ export async function POST(req: Request) {
     const s = await requireSession();
     const b = await req.json().catch(() => ({}));
     const body = String(b.body || '').trim();
-    if (!body) return bad('Say something.');
-    const rows = (await sql`INSERT INTO messages (trip_id, guest_code, name, body)
-                            VALUES (${s.tripId}, ${s.code}, ${s.name}, ${body}) RETURNING id`) as any[];
+    if (!body && !b.file_id) return bad('Say something (or attach a file).');
+    const rows = (await sql`INSERT INTO messages (trip_id, guest_code, name, body, file_id)
+                            VALUES (${s.tripId}, ${s.code}, ${s.name}, ${body}, ${b.file_id || null})
+                            RETURNING id`) as any[];
     return ok({ id: rows[0].id });
   });
 }

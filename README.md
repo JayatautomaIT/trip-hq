@@ -6,19 +6,16 @@ A free, multi-event planning site for trips and bachelor parties. One deployment
 
 - **Login by code** — people enter an **event code** (the demo one is `demo2026`) + their **name code** (`firstnamelastname`). No signups.
 - **You (organizer)** get an extra **admin passcode** that unlocks finances, the schedule, event settings, and pinning.
-- **Schedule** — day-by-day itinerary (admin edits, everyone views). Pin the locked-in ones.
-- **Ideas & Voting** — anyone pitches ideas with links; everyone votes; you pin the winners.
-- **Date Poll** — candidate dates; everyone marks works / maybe / can't; the front-runner floats up.
-- **Chat** — group chat where any message can be turned into a **to-do**, **shopping item**, or **packing item** in one tap.
-- **Notes Board** — shared sticky notes, everyone edits, auto-refreshes.
-- **To-Do / Assignments** — who's booking what; assignee ticks it off.
-- **Meal Planner** — collaborative; add ingredients to any meal, push them to the shared shopping list; dietary notes surface here.
-- **Packing & Shopping** — each guy's **private** packing list, an opt-in **"what everyone's bringing"** board, and one shared group shopping list.
-- **Money** — expenses with **multiple payers per item** + per-item split selection; auto balances & "who pays whom"; **payment handles**, **recorded settlements**, **per-person budget**, and **spending by category**.
-- **Files & Photos** — everyone uploads photos, tickets, and reservation PDFs (via Vercel Blob).
-- **Trip Info** — address, Wi-Fi, house rules, rides, rooming, emergency contacts; plus event settings (name/date/budget).
-- **The Guys / RSVP** — roster; each guy sets his own RSVP, payment handle, and dietary notes; you can edit anyone.
-- **Copy summary** — one tap on the home page copies a plan summary to paste into your group chat.
+
+The app is **five sections** on a phone-style bottom nav, each with tabs:
+
+| Section | Tabs | What's in it |
+|---|---|---|
+| 🏠 **Home** | — | Countdown, "Up next" (next event / meal / open to-dos), 📌 Locked in, Share summary, ⚙️ organizer settings (event name, date, per-person budget) |
+| 🗓️ **Plan** | Schedule · Meals | Day-by-day itinerary (admin edits) + collaborative meal planner; add ingredients to a meal and push them to the shopping list. Dietary notes surface here. |
+| 💬 **Board** | Chat · Ideas · Notes · Files | Group chat with **file/photo attachments**, where any message becomes a **Note / Idea / To-do / Buy / Bring** in one tap. Ideas with voting + pinning. One notes list where **pinned notes are the trip info** (address, Wi-Fi, rules). Files gallery collects everything uploaded anywhere. |
+| ✅ **Lists** | Packing · Shopping · To-Do | Private packing list with an opt-in 👁 **"what everyone's bringing"** board, the shared group shopping list, and assignable to-dos. |
+| 👥 **Crew** | The Guys · Money | Roster & RSVP (each guy sets his own, plus payment handle + dietary notes) and the full money view: **multiple payers per expense**, per-item split selection, auto balances & "who pays whom" with payment handles, recorded settlements, budget, and spending by category. |
 
 ---
 

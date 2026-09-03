@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { upload } from '@vercel/blob/client';
-import { Protected } from '@/components/Protected';
 import { useSession } from '@/components/SessionProvider';
 import { jget, jpost, jdel } from '@/lib/client';
 
@@ -24,15 +23,7 @@ function humanSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default function FilesPage() {
-  return (
-    <Protected>
-      <Files />
-    </Protected>
-  );
-}
-
-function Files() {
+export function FilesView() {
   const { session, isAdmin } = useSession();
   const [files, setFiles] = useState<FileRow[]>([]);
   const [caption, setCaption] = useState('');
@@ -54,11 +45,8 @@ function Files() {
         setStatus(`Uploading ${i + 1} of ${list.length}…`);
         const blob = await upload(file.name, file, { access: 'public', handleUploadUrl: '/api/files/upload' });
         await jpost('/api/files', {
-          url: blob.url,
-          pathname: blob.pathname,
-          name: file.name,
-          content_type: file.type,
-          size: file.size,
+          url: blob.url, pathname: blob.pathname, name: file.name,
+          content_type: file.type, size: file.size,
           caption: list.length === 1 ? caption : '',
         });
       }
@@ -78,12 +66,11 @@ function Files() {
   const others = files.filter((f) => !(f.content_type || '').startsWith('image/'));
 
   return (
-    <div className="container">
-      <h1>Files & Photos 📸</h1>
-      <p className="page-sub">Share photos, tickets, and reservation PDFs. Everyone in the event can see and add.</p>
+    <div>
+      <p className="page-sub">Everything uploaded here or attached in chat shows up in this gallery.</p>
 
       <div className="card">
-        <label>Add photos or files (you can pick several)</label>
+        <label>Add photos or files</label>
         <input ref={inputRef} type="file" multiple />
         <div style={{ marginTop: 10 }}>
           <label>Caption (optional, for a single file)</label>

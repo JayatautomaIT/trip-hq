@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Protected } from '@/components/Protected';
 import { useSession } from '@/components/SessionProvider';
 import { jget, jpost, jpatch, jdel } from '@/lib/client';
 import { formatMoney, dollarsToCents, centsToDollars } from '@/lib/money';
@@ -10,36 +9,17 @@ type Guest = { code: string; name: string; pay_handle?: string | null };
 type Contribution = { guest_code: string; amount_cents: number };
 type Settlement = { id: number; from_code: string; to_code: string; amount_cents: number; note: string | null };
 type Expense = {
-  id: number;
-  title: string;
-  category: string | null;
-  notes: string | null;
-  contributions: Contribution[];
-  splitters: string[];
-  total_cents: number;
+  id: number; title: string; category: string | null; notes: string | null;
+  contributions: Contribution[]; splitters: string[]; total_cents: number;
 };
 type Data = {
-  expenses: Expense[];
-  guests: Guest[];
-  balances: Record<string, number>;
+  expenses: Expense[]; guests: Guest[]; balances: Record<string, number>;
   transfers: { from: string; to: string; cents: number }[];
-  total: number;
-  settlements: Settlement[];
-  byCategory: Record<string, number>;
-  budgetPerPerson: number | null;
-  perPerson: number;
-  guestCount: number;
+  total: number; settlements: Settlement[]; byCategory: Record<string, number>;
+  budgetPerPerson: number | null; perPerson: number; guestCount: number;
 };
 
-export default function ExpensesPage() {
-  return (
-    <Protected>
-      <Expenses />
-    </Protected>
-  );
-}
-
-function Expenses() {
+export function MoneyView() {
   const { isAdmin } = useSession();
   const [data, setData] = useState<Data | null>(null);
   const [adding, setAdding] = useState(false);
@@ -60,20 +40,17 @@ function Expenses() {
     return (code: string) => m[code] || '';
   }, [data]);
 
-  if (!data) return <div className="container"><p className="muted">Loading…</p></div>;
+  if (!data) return <p className="muted">Loading…</p>;
 
   const catEntries = Object.entries(data.byCategory).sort((a, b) => b[1] - a[1]);
   const catMax = catEntries.length ? Math.max(...catEntries.map((c) => c[1])) : 0;
 
   return (
-    <div className="container">
-      <h1>Money 💸</h1>
+    <div>
       <p className="page-sub">
-        Each expense lists who chipped in and who&apos;s splitting it. Balances update automatically.
-        {isAdmin ? '' : ' Only the organizer can edit.'}
+        Each expense lists who chipped in and who&apos;s splitting it.{isAdmin ? '' : ' Only the organizer can edit.'}
       </p>
 
-      {/* Totals / budget */}
       <div className="card">
         <div className="grid cols-3">
           <div className="card" style={{ padding: 12 }}>
@@ -96,13 +73,12 @@ function Expenses() {
                 </div>
               </>
             ) : (
-              <div className="tiny muted">Set it on the Trip Info page.</div>
+              <div className="tiny muted">Set it in ⚙️ on Home.</div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Category breakdown */}
       {catEntries.length > 0 && (
         <div className="card">
           <h2>Where it&apos;s going</h2>
@@ -119,11 +95,10 @@ function Expenses() {
         </div>
       )}
 
-      {/* Balances */}
       <div className="card">
         <div className="spread">
           <h2 style={{ margin: 0 }}>Balances</h2>
-          <span className="muted small">after {data.settlements.length} recorded payment(s)</span>
+          <span className="muted small">after {data.settlements.length} payment(s)</span>
         </div>
         <div className="grid cols-3" style={{ marginTop: 12 }}>
           {data.guests.map((g) => {
@@ -140,7 +115,7 @@ function Expenses() {
         </div>
 
         <div className="divider" />
-        <h3 style={{ marginBottom: 8 }}>Who pays whom to settle up</h3>
+        <h3 style={{ marginBottom: 8 }}>Who pays whom</h3>
         {data.transfers.length === 0 ? (
           <p className="muted small">Everyone&apos;s even. 🎉</p>
         ) : (
@@ -148,7 +123,7 @@ function Expenses() {
             {data.transfers.map((t, i) => (
               <div key={i} className="row">
                 <span className="badge bad">{nameOf(t.from)}</span>
-                <span>→ pays →</span>
+                <span>→</span>
                 <span className="badge good">{nameOf(t.to)}</span>
                 {handleOf(t.to) && <span className="tiny muted">{handleOf(t.to)}</span>}
                 <b>{formatMoney(t.cents)}</b>
@@ -158,16 +133,13 @@ function Expenses() {
         )}
       </div>
 
-      {/* Recorded payments */}
       <Settlements data={data} nameOf={nameOf} isAdmin={isAdmin} onChange={load} />
 
-      {/* Admin: add */}
       {isAdmin && !adding && <button className="btn primary" style={{ marginTop: 14 }} onClick={() => setAdding(true)}>+ Add expense</button>}
       {isAdmin && adding && (
         <ExpenseForm guests={data.guests} onDone={() => { setAdding(false); load(); }} onCancel={() => setAdding(false)} />
       )}
 
-      {/* Expense list */}
       <div className="stack" style={{ marginTop: 16 }}>
         {data.expenses.length === 0 && <p className="muted">No expenses logged yet.</p>}
         {data.expenses.map((e) =>
@@ -208,13 +180,8 @@ function Expenses() {
   );
 }
 
-function ExpenseForm({
-  guests, expense, onDone, onCancel,
-}: {
-  guests: Guest[];
-  expense?: Expense;
-  onDone: () => void;
-  onCancel: () => void;
+function ExpenseForm({ guests, expense, onDone, onCancel }: {
+  guests: Guest[]; expense?: Expense; onDone: () => void; onCancel: () => void;
 }) {
   const [title, setTitle] = useState(expense?.title || '');
   const [category, setCategory] = useState(expense?.category || '');
@@ -237,7 +204,7 @@ function ExpenseForm({
   function toggleSplit(code: string) {
     setSplitters((prev) => {
       const n = new Set(prev);
-      n.has(code) ? n.delete(code) : n.add(code);
+      if (n.has(code)) n.delete(code); else n.add(code);
       return n;
     });
   }
@@ -246,9 +213,7 @@ function ExpenseForm({
     if (!title.trim()) return;
     setBusy(true);
     const payload = {
-      title,
-      category,
-      notes,
+      title, category, notes,
       contributions: contribs
         .map((c) => ({ guest_code: c.guest_code, amount_cents: dollarsToCents(c.amount) }))
         .filter((c) => c.guest_code && c.amount_cents > 0),
@@ -309,9 +274,7 @@ function ExpenseForm({
           ))}
         </div>
         {splitters.size > 0 && total > 0 && (
-          <div className="small muted" style={{ marginTop: 8 }}>
-            ≈ {formatMoney(Math.round(total / splitters.size))} each
-          </div>
+          <div className="small muted" style={{ marginTop: 8 }}>≈ {formatMoney(Math.round(total / splitters.size))} each</div>
         )}
       </div>
 
@@ -345,7 +308,7 @@ function Settlements({ data, nameOf, isAdmin, onChange }: {
   return (
     <div className="card" style={{ marginTop: 14 }}>
       <h2>Payments made</h2>
-      <p className="tiny muted" style={{ marginTop: -6 }}>Log money that&apos;s actually changed hands so the balances above update.</p>
+      <p className="tiny muted" style={{ marginTop: -6 }}>Log money that&apos;s actually changed hands.</p>
 
       {isAdmin && (
         <div className="row" style={{ marginBottom: 10 }}>

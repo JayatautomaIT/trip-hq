@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Protected } from '@/components/Protected';
 import { useSession } from '@/components/SessionProvider';
 import { jget, jpost, jpatch, jdel } from '@/lib/client';
 
@@ -21,18 +20,12 @@ const SLOTS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
 const norm = (v: any) => (v ? String(v).slice(0, 10) : '');
 function dayLabel(d: string | null) {
   if (!d) return 'Anytime';
-  return new Date(norm(d) + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  return new Date(norm(d) + 'T00:00:00').toLocaleDateString(undefined, {
+    weekday: 'long', month: 'short', day: 'numeric',
+  });
 }
 
-export default function MealsPage() {
-  return (
-    <Protected>
-      <Meals />
-    </Protected>
-  );
-}
-
-function Meals() {
+export function MealsView() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [diets, setDiets] = useState<{ name: string; diet: string }[]>([]);
   const [toast, setToast] = useState('');
@@ -41,7 +34,9 @@ function Meals() {
   const load = () => jget('/api/meals').then((d) => setMeals(d.meals)).catch(() => {});
   useEffect(() => {
     load();
-    jget('/api/guests').then((d) => setDiets(d.guests.filter((g: any) => g.diet).map((g: any) => ({ name: g.name, diet: g.diet })))).catch(() => {});
+    jget('/api/guests')
+      .then((d) => setDiets(d.guests.filter((g: any) => g.diet).map((g: any) => ({ name: g.name, diet: g.diet }))))
+      .catch(() => {});
   }, []);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2500); };
@@ -58,15 +53,13 @@ function Meals() {
   const keys = Object.keys(groups).sort();
 
   return (
-    <div className="container">
-      <h1>Meal Planner 🍔</h1>
-      <p className="page-sub">Plan meals together. Add ingredients to any meal, then send them to the shared shopping list.</p>
+    <div>
+      <p className="page-sub">Plan meals together, then send the ingredients to the group shopping list.</p>
 
       {diets.length > 0 && (
         <div className="card" style={{ borderColor: 'rgba(255,207,92,0.4)' }}>
           <h3 style={{ marginBottom: 6 }}>🍽️ Dietary notes</h3>
           {diets.map((d, i) => <div key={i} className="small">• <b>{d.name}</b>: {d.diet}</div>)}
-          <p className="tiny muted" style={{ marginTop: 6 }}>Guys set these on the Guys page.</p>
         </div>
       )}
 
@@ -153,7 +146,7 @@ function MealCard({ meal, onChange, onFlash }: { meal: Meal; onChange: () => voi
       </div>
       {meal.ingredients.length > 0 && (
         <div style={{ marginTop: 10 }}>
-          <button className="btn sm blue" onClick={toShopping}>🛒 Add ingredients to shopping list</button>
+          <button className="btn sm blue" onClick={toShopping}>🛒 Send ingredients to shopping list</button>
         </div>
       )}
     </div>

@@ -28,28 +28,57 @@ html, body {
 a { color: var(--accent-2); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-.container { max-width: 960px; margin: 0 auto; padding: 20px 16px 80px; }
+/* bottom padding clears the fixed bottom nav */
+.container { max-width: 960px; margin: 0 auto; padding: 18px 16px calc(96px + env(safe-area-inset-bottom, 0px)); }
 
-/* ---------- Top nav ---------- */
-.nav {
+/* ---------- Top bar ---------- */
+.topbar {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(14, 17, 23, 0.9);
+  background: rgba(14, 17, 23, 0.92);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
-.nav-inner {
+.topbar-inner {
   max-width: 960px; margin: 0 auto; padding: 10px 16px;
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.brand { font-weight: 800; letter-spacing: 0.3px; font-size: 18px; }
+.brand { font-weight: 800; letter-spacing: 0.3px; font-size: 17px; }
 .brand span { color: var(--accent); }
-.nav-links { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
-.nav-links a {
-  color: var(--muted); padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 600;
-}
-.nav-links a:hover { color: var(--text); background: var(--panel-2); text-decoration: none; }
-.nav-links a.active { color: var(--text); background: var(--panel-2); }
 .who { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+
+/* ---------- Bottom nav (5 sections) ---------- */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+  display: flex; justify-content: space-around; align-items: stretch;
+  background: rgba(14, 17, 23, 0.97);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 9px 2px 8px; color: var(--muted); text-decoration: none;
+  border-top: 2px solid transparent; min-width: 0;
+}
+.bn-item:hover { text-decoration: none; color: var(--text); }
+.bn-item.active { color: var(--accent); border-top-color: var(--accent); background: rgba(255,138,61,0.07); }
+.bn-icon { font-size: 20px; line-height: 1; }
+.bn-label { font-size: 11px; font-weight: 700; letter-spacing: 0.2px; }
+
+/* ---------- Pill tabs (inside a section) ---------- */
+.tabs {
+  display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 12px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 0 0 auto; background: var(--panel-2); color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 7px 14px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--accent); border-color: var(--accent); color: #201200; }
 
 /* ---------- Cards / layout ---------- */
 .card {
@@ -142,6 +171,9 @@ label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px
 .note.blue { background: #1f2f3f; }
 .note.green { background: #203a2c; }
 .note.pink { background: #3a2030; }
+
+/* ---------- Chat ---------- */
+.chat-scroll { max-height: 58vh; overflow-y: auto; }
 
 /* ---------- Vote ---------- */
 .vote-btn {

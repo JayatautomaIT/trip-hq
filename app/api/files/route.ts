@@ -21,10 +21,12 @@ export async function POST(req: Request) {
     const s = await requireSession();
     const b = await req.json().catch(() => ({}));
     if (!b.url) return bad('Missing file url.');
-    await sql`INSERT INTO files (trip_id, url, pathname, name, content_type, size, caption, guest_code, added_by)
-              VALUES (${s.tripId}, ${b.url}, ${b.pathname || null}, ${b.name || null},
-                      ${b.content_type || null}, ${b.size || null}, ${b.caption || null}, ${s.code}, ${s.name})`;
-    return ok();
+    const rows = (await sql`
+      INSERT INTO files (trip_id, url, pathname, name, content_type, size, caption, guest_code, added_by)
+      VALUES (${s.tripId}, ${b.url}, ${b.pathname || null}, ${b.name || null},
+              ${b.content_type || null}, ${b.size || null}, ${b.caption || null}, ${s.code}, ${s.name})
+      RETURNING id`) as any[];
+    return ok({ id: rows[0].id });
   });
 }
 
